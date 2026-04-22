@@ -1,0 +1,159 @@
+.todo-section {
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.todo-form {
+  padding: 0 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.todo-form-row {
+  display: flex;
+  gap: 6px;
+}
+
+.todo-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.todo-input:focus {
+  border-color: var(--accent);
+}
+
+.todo-input::placeholder {
+  color: var(--text-muted);
+}
+
+.todo-add-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  color: #0f0f1a;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.todo-add-btn:hover {
+  opacity: 0.85;
+}
+
+.todo-date-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: var(--text-muted);
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+.todo-date-input:focus {
+  border-color: var(--accent);
+}
+
+.todo-list {
+  list-style: none;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 0 12px 8px;
+}
+
+.todo-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 8px 0;
+  font-size: 12px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.todo-item:last-child {
+  border-bottom: none;
+}
+
+.todo-checkbox {
+  margin-top: 2px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.todo-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.todo-text {
+  display: block;
+  word-break: break-word;
+  font-size: 12px;
+}
+
+.todo-item.completed .todo-text {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.todo-due {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.todo-due.overdue {
+  color: var(--danger);
+}
+
+.todo-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.todo-item:hover .todo-delete {
+  opacity: 1;
+}
+
+.todo-delete:hover {
+  color: var(--danger);
+}

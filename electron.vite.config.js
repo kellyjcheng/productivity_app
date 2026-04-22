@@ -1,17 +1,36 @@
-/**
- * CLAUDE CODE INSTRUCTIONS — electron.vite.config.js
- *
- * Configure electron-vite for the project.
- *
- * TASKS:
- * 1. Import { defineConfig } from 'electron-vite'.
- * 2. Import react from '@vitejs/plugin-react'.
- * 3. Export a config with:
- *    - main: { build: { rollupOptions: { input: 'src/main/main.js' } } }
- *    - preload: { build: { rollupOptions: { input: 'src/main/preload.js' } } }
- *    - renderer: {
- *        plugins: [react()],
- *        build: { rollupOptions: { input: 'src/renderer/index.html' } }
- *      }
- * 4. For the renderer, set resolve.alias so '@' maps to 'src/renderer'.
- */
+import { defineConfig } from 'electron-vite'
+import react from '@vitejs/plugin-react'
+import { resolve } from 'path'
+
+export default defineConfig({
+  main: {
+    build: {
+      outDir: 'dist-electron/main',
+      rollupOptions: {
+        input: resolve(__dirname, 'src/main/main.js')
+      }
+    }
+  },
+  preload: {
+    build: {
+      outDir: 'dist-electron/preload',
+      rollupOptions: {
+        input: resolve(__dirname, 'src/main/preload.js')
+      }
+    }
+  },
+  renderer: {
+    plugins: [react()],
+    resolve: {
+      alias: {
+        '@': resolve(__dirname, 'src/renderer')
+      }
+    },
+    build: {
+      outDir: 'dist/renderer',
+      rollupOptions: {
+        input: resolve(__dirname, 'src/renderer/index.html')
+      }
+    }
+  }
+})

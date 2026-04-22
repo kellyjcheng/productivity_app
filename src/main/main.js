@@ -1,25 +1,64 @@
-/**
- * CLAUDE CODE INSTRUCTIONS — main.js (Electron Main Process)
- *
- * This is the entry point for the Electron app.
- *
- * TASKS:
- * 1. Create a BrowserWindow with:
- *    - width: 420, height: 720
- *    - resizable: true, minWidth: 360, minHeight: 500
- *    - frame: false (frameless; we'll add custom drag region in renderer)
- *    - alwaysOnTop: false (user can toggle via UI)
- *    - transparent: false
- *    - webPreferences: contextIsolation: true, preload: path to preload.js
- * 2. Load the Vite dev server in dev, or dist/renderer/index.html in prod.
- * 3. Register IPC handlers:
- *    - 'get-todos'      → read todos from electron-store
- *    - 'save-todos'     → write todos array to electron-store
- *    - 'toggle-startup' → call autolaunch.js enable/disable based on boolean arg
- *    - 'get-startup'    → return current autolaunch enabled state
- *    - 'close-window'   → app.quit()
- *    - 'minimize-window'→ win.minimize()
- * 4. Import and initialize autolaunch.js.
- * 5. Use electron-store (import Store from 'electron-store') for persistence.
- *    Store schema: { todos: { type: 'array', default: [] } }
- */
+import { app, BrowserWindow, ipcMain } from 'electron'
+import { join } from 'path'
+import Store from 'electron-store'
+import { enableStartup, disableStartup, isStartupEnabled } from './autolaunch.js'
+
+const store = new Store({
+  schema: {
+    todos: { type: 'array', default: [] }
+  }
+})
+
+let win
+
+function createWindow() {
+  win = new BrowserWindow({
+    width: 420,
+    height: 720,
+    resizable: true,
+    minWidth: 360,
+    minHeight: 500,
+    frame: false,
+    alwaysOnTop: false,
+    transparent: false,
+    webPreferences: {
+      contextIsolation: true,
+      preload: join(__dirname, '../preload/preload.js')
+    }
+  })
+
+  if (process.env['ELECTRON_RENDERER_URL']) {
+    win.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  } else {
+    win.loadFile(join(__dirname, '../../dist/renderer/index.html'))
+  }
+}
+
+app.whenReady().then(createWindow)
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow()
+})
+
+ipcMain.handle('get-todos', () => store.get('todos'))
+
+ipcMain.handle('save-todos', (_, todos) => {
+  store.set('todos', todos)
+})
+
+ipcMain.handle('toggle-startup', async (_, enable) => {
+  if (enable) await enableStartup()
+  else await disableStartup()
+})
+
+ipcMain.handle('get-startup', () => isStartupEnabled())
+
+ipcMain.on('close-window', () => app.quit())
+
+ipcMain.on('minimize-window', () => {
+  if (win) win.minimize()
+})

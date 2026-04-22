@@ -1,33 +1,64 @@
-/**
- * CLAUDE CODE INSTRUCTIONS — App.jsx (Root React Component)
- *
- * This is the root layout of the app. The window is small (420×720px) and frameless.
- *
- * LAYOUT (top to bottom, all in one scrollable column):
- * ┌─────────────────────────────────────┐
- * │  [Custom Title Bar] drag region,    │
- * │  minimize + close buttons, startup  │
- * │  toggle checkbox                    │
- * ├─────────────────────────────────────┤
- * │  <Weather /> (hourly, next 9 hrs)   │
- * ├─────────────────────────────────────┤
- * │  <TodoList /> (scrollable)          │
- * ├─────────────────────────────────────┤
- * │  <News /> (scrollable headlines)    │
- * └─────────────────────────────────────┘
- *
- * WOOPER:
- * - <Wooper /> renders absolutely positioned OVER the entire app window.
- * - It should NOT be inside the column — it floats on top of everything.
- * - Pass the window dimensions (420, 720) as props so Wooper can bounce.
- *
- * STYLE NOTES:
- * - Dark theme. Background: #1a1a2e. Accent: #4fc3f7 (light blue).
- * - Import globals.css here.
- * - The title bar div must have style={{ WebkitAppRegion: 'drag' }} for frameless dragging.
- *   Buttons inside title bar must have style={{ WebkitAppRegion: 'no-drag' }}.
- *
- * STATE:
- * - startupEnabled (bool) — fetched via window.electronAPI.getStartupEnabled() on mount.
- * - Toggling the checkbox calls window.electronAPI.toggleStartup(bool).
- */
+import { useState, useEffect } from 'react'
+import Weather from './components/Weather.jsx'
+import TodoList from './components/TodoList.jsx'
+import News from './components/News.jsx'
+import Wooper from './components/Wooper.jsx'
+import './styles/globals.css'
+
+export default function App() {
+  const [startupEnabled, setStartupEnabled] = useState(false)
+
+  useEffect(() => {
+    if (window.electronAPI) {
+      window.electronAPI.getStartupEnabled().then(setStartupEnabled).catch(() => {})
+    }
+  }, [])
+
+  const handleStartupToggle = async (e) => {
+    const enabled = e.target.checked
+    setStartupEnabled(enabled)
+    if (window.electronAPI) {
+      await window.electronAPI.toggleStartup(enabled)
+    }
+  }
+
+  return (
+    <div className="app">
+      <Wooper windowWidth={420} windowHeight={720} />
+
+      <div className="title-bar" style={{ WebkitAppRegion: 'drag' }}>
+        <span className="title-bar-name">Wooper Dashboard</span>
+        <div className="title-bar-controls" style={{ WebkitAppRegion: 'no-drag' }}>
+          <label className="startup-toggle">
+            <input
+              type="checkbox"
+              checked={startupEnabled}
+              onChange={handleStartupToggle}
+            />
+            <span className="startup-label">On startup</span>
+          </label>
+          <button
+            className="title-btn"
+            onClick={() => window.electronAPI?.minimizeWindow()}
+            title="Minimize"
+          >
+            —
+          </button>
+          <button
+            className="title-btn title-btn-close"
+            onClick={() => window.electronAPI?.closeWindow()}
+            title="Close"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
+      <div className="content">
+        <Weather />
+        <TodoList />
+        <News />
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,8 @@
+.wooper-sprite {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  pointer-events: none;
+  z-index: 999;
+  image-rendering: pixelated;
+}

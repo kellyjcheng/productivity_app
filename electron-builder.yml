@@ -1,18 +1,21 @@
-# CLAUDE CODE INSTRUCTIONS — electron-builder.yml
-#
-# Configure electron-builder for packaging the app on Windows, Mac, and Linux.
-#
-# TASKS:
-# Set appId: com.yourname.wooperdashboard
-# Set productName: Wooper Dashboard
-# Set directories.output to 'dist-electron'
-# Configure targets:
-#   win: target: nsis (installer)
-#   mac: target: dmg
-#   linux: target: AppImage
-# Set icon paths:
-#   win: build/icon.ico
-#   mac: build/icon.icns
-#   linux: build/icon.png
-# Add asar: true
-# Add files: ["dist/**/*", "dist-electron/**/*"]
+appId: com.kellycheng.wooperdashboard
+productName: Wooper Dashboard
+asar: true
+directories:
+  output: dist-electron
+files:
+  - dist/**/*
+  - dist-electron/main/**/*
+  - dist-electron/preload/**/*
+win:
+  target:
+    - nsis
+  icon: build/icon.ico
+mac:
+  target:
+    - dmg
+  icon: build/icon.icns
+linux:
+  target:
+    - AppImage
+  icon: build/icon.png
