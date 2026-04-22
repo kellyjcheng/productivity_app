@@ -1,0 +1,22 @@
+// CLAUDE CODE INSTRUCTIONS — package.json
+//
+// Set up the project with these dependencies:
+//
+// devDependencies:
+//   electron, electron-vite, electron-builder,
+//   @vitejs/plugin-react, vite
+//
+// dependencies:
+//   react, react-dom,
+//   electron-store,
+//   auto-launch
+//
+// scripts:
+//   "dev":     "electron-vite dev"
+//   "build":   "electron-vite build"
+//   "preview": "electron-vite preview"
+//   "dist":    "electron-builder"
+//
+// Set "main" to "dist-electron/main/main.js"
+// Set "type": "module" only if electron-vite supports it; otherwise use CJS.
+// Check electron-vite docs for the correct module format.

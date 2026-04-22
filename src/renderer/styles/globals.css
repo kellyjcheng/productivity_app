@@ -1,0 +1,19 @@
+/* CLAUDE CODE INSTRUCTIONS — globals.css
+ *
+ * Global styles for the Wooper Dashboard.
+ *
+ * DESIGN DIRECTION:
+ * - Deep space dark theme.
+ * - Background: #0f0f1a (near black with blue tint)
+ * - Surface: #1a1a2e (panels, cards)
+ * - Primary accent: #4fc3f7 (light blue)
+ * - Secondary accent: #7c4dff (purple)
+ * - Text: #e0e0e0 (primary), #9e9e9e (muted)
+ * - Danger: #ef5350 (overdue tasks, errors)
+ * - Font: 'JetBrains Mono' for numbers/code-like data, 'Nunito' for readable text.
+ *   Load both from Google Fonts via @import.
+ * - Base font-size: 13px (small window, keep it dense)
+ * - Remove all default margins/padding (box-sizing: border-box)
+ * - Scrollbars: custom thin dark scrollbar using ::-webkit-scrollbar
+ * - Section headers: uppercase, letter-spacing: 0.1em, color: accent, font-size: 10px
+ */
