@@ -69,8 +69,25 @@ function WeatherIcon({ code, ...props }) {
   return <IconCloud {...props} />
 }
 
-function Sparkline() {
-  return null
+function Sparkline({ data = [], up = true }) {
+  const w = 100, h = 40
+  if (!data.length) return null
+  const min = Math.min(...data), max = Math.max(...data)
+  const range = max - min || 1
+  const pts = data.map((v, i) => [
+    (i / (data.length - 1)) * w,
+    h - ((v - min) / range) * (h - 4) - 2,
+  ])
+  const d = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')
+  const stroke = up ? '#10b981' : '#ef4444'
+  const fill = up ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'
+  const areaD = d + ` L ${pts[pts.length - 1][0]} ${h} L ${pts[0][0]} ${h} Z`
+  return (
+    <svg className="stock-spark" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
+      <path d={areaD} fill={fill} />
+      <path d={d} fill="none" stroke={stroke} strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
 }
 
 // ---------- WOOPER (title bar slide) ----------
@@ -436,7 +453,12 @@ function buildStocks(offset = 0) {
 }
 
 function StocksPanel() {
-  const { stocks, loading, error, refresh, refreshTime } = useStocks()
+  const [stocks, setStocks] = useState(() => buildStocks())
+  const [refreshTime, setRefreshTime] = useState(new Date())
+  const refresh = () => {
+    setStocks(buildStocks(Math.random() * 100))
+    setRefreshTime(new Date())
+  }
   return (
     <section className="panel panel-stocks">
       <div className="panel-head">
