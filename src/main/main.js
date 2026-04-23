@@ -9,7 +9,13 @@ const store = new Store({
   }
 })
 
-const STOCK_SYMBOLS = ['NDAQ', 'POWL', 'PLTR', 'RGTI', 'MU', 'CRWD', 'META', 'AMD']
+const STOCK_SYMBOLS = ['NDAQ', 'POWL', 'PLTR', 'RGTI']
+const STOCK_NEWS = {
+  NDAQ: 'Nasdaq beats Q1 estimates on record trading volume; exchange revenue up 9% YoY.',
+  POWL: 'Powell Industries wins $180M data-center switchgear contract; backlog hits all-time high.',
+  PLTR: 'Palantir slides on defense-budget resolution uncertainty despite AIP customer growth.',
+  RGTI: 'Rigetti demonstrates 99.5% 2-qubit gate fidelity on Ankaa-3; shares pop pre-market.',
+}
 
 let win
 
@@ -53,40 +59,34 @@ ipcMain.handle('save-todos', (_, todos) => {
 })
 
 ipcMain.handle('get-stock-quotes', async () => {
-  const symbols = STOCK_SYMBOLS.join(',')
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}`
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Accept': 'application/json',
-    },
-  })
+  const token = process.env.VITE_YAHOO_FINANCE_API_KEY
+  if (!token) throw new Error('VITE_YAHOO_FINANCE_API_KEY not set in .env')
 
-  if (!res.ok) throw new Error(`Yahoo Finance ${res.status}`)
+  const to = Math.floor(Date.now() / 1000)
+  const from = to - 8 * 60 * 60
 
-  const data = await res.json()
-  const results = data?.quoteResponse?.result
-  if (!Array.isArray(results)) throw new Error('Invalid stock quote response')
+  const results = await Promise.all(
+    STOCK_SYMBOLS.map(async (sym) => {
+      const [quote, candle] = await Promise.all([
+        fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${token}`).then(r => r.json()),
+        fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=60&from=${from}&to=${to}&token=${token}`)
+          .then(r => r.json()).catch(() => null),
+      ])
 
-  const bySymbol = new Map(results.map((quote) => [quote.symbol, quote]))
+      if (typeof quote.c !== 'number') throw new Error(`No quote for ${sym}`)
+      const spark = candle?.s === 'ok' ? candle.c.filter(v => v != null) : []
 
-  return STOCK_SYMBOLS.map((symbol) => {
-    const quote = bySymbol.get(symbol)
-    if (!quote || typeof quote.regularMarketPrice !== 'number') {
-      throw new Error(`Missing quote for ${symbol}`)
-    }
+      return {
+        sym,
+        price: quote.c,
+        changePct: quote.dp ?? 0,
+        spark,
+        news: STOCK_NEWS[sym] ?? '',
+      }
+    })
+  )
 
-    const change = typeof quote.regularMarketChange === 'number' ? quote.regularMarketChange : 0
-    const changePct = typeof quote.regularMarketChangePercent === 'number' ? quote.regularMarketChangePercent : 0
-
-    return {
-      sym: symbol,
-      price: quote.regularMarketPrice,
-      change,
-      changePct,
-      news: `Day change ${change >= 0 ? '+' : '-'}$${Math.abs(change).toFixed(2)}`,
-    }
-  })
+  return results
 })
 
 ipcMain.handle('toggle-startup', async (_, enable) => {

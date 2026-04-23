@@ -453,12 +453,7 @@ function buildStocks(offset = 0) {
 }
 
 function StocksPanel() {
-  const [stocks, setStocks] = useState(() => buildStocks())
-  const [refreshTime, setRefreshTime] = useState(new Date())
-  const refresh = () => {
-    setStocks(buildStocks(Math.random() * 100))
-    setRefreshTime(new Date())
-  }
+  const { stocks, loading, error, refresh, refreshTime } = useStocks()
   return (
     <section className="panel panel-stocks">
       <div className="panel-head">
@@ -467,10 +462,11 @@ function StocksPanel() {
           <div className="panel-title">Watchlist</div>
         </div>
         <div className="panel-meta stocks-meta">
-          <span>Updated · {refreshTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
-          <button className="stocks-refresh-btn" onClick={refresh} title="Refresh charts">↻</button>
+          <span>{loading ? 'Loading…' : `Updated · ${refreshTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`}</span>
+          <button className="stocks-refresh-btn" onClick={refresh} title="Refresh charts" disabled={loading}>↻</button>
         </div>
       </div>
+      {error && <div className="panel-error">{error}</div>}
       <div className="stocks-grid">
         {stocks.map(s => {
           const up = s.changePct >= 0
