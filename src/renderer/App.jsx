@@ -147,7 +147,7 @@ function TitleBar() {
           <span className={`greet ${!greetFlip ? 'show' : 'hide'}`}>{phase.brief}</span>
           <span className={`greet ${greetFlip ? 'show' : 'hide'}`}>{phase.greet}</span>
         </div>
-        <div className="app-sub">— {dateStr}</div>
+        <div className="app-sub">{dateStr}</div>
       </div>
       <Wooper />
       <div className="titlebar-right">
@@ -185,7 +185,7 @@ function NewsPanel() {
     <section className="panel panel-news">
       <div className="panel-head">
         <div>
-          <div className="panel-label">I · World & Politics</div>
+          <div className="panel-label">World & Politics</div>
           <div className="panel-title">Breaking</div>
         </div>
         <div className="panel-meta" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -280,7 +280,7 @@ function WeatherPanel() {
     <section className="panel panel-weather">
       <div className="panel-head">
         <div>
-          <div className="panel-label">II · Weather</div>
+          <div className="panel-label">Weather</div>
           <div className="panel-title">{cityName || 'Loading…'}</div>
         </div>
         <div className="panel-meta">
@@ -377,7 +377,7 @@ function TodoPanel() {
     <section className="panel panel-todo">
       <div className="panel-head">
         <div>
-          <div className="panel-label">III · Tasks</div>
+          <div className="panel-label">Tasks</div>
           <div className="panel-title">To-do</div>
         </div>
         <div className="panel-meta">{doneCount}/{todos.length} done</div>
@@ -430,27 +430,6 @@ function TodoPanel() {
 }
 
 // ---------- STOCKS ----------
-function genSpark(seed, trend) {
-  const arr = []
-  let v = 100
-  for (let i = 0; i < 24; i++) {
-    const wiggle = (Math.sin(seed + i * 0.7) + Math.cos(seed * 1.3 + i * 0.4)) * 1.5
-    v += wiggle + trend
-    arr.push(v)
-  }
-  return arr
-}
-
-const STOCK_DEFS = [
-  { sym: 'NDAQ', price: 78.42,  changePct:  0.84, seed: 1,  trend:  0.15, news: 'Nasdaq beats Q1 estimates on record trading volume; exchange revenue up 9% YoY.' },
-  { sym: 'POWL', price: 241.18, changePct:  2.34, seed: 3,  trend:  0.45, news: 'Powell Industries wins $180M data-center switchgear contract; backlog hits all-time high.' },
-  { sym: 'PLTR', price: 32.77,  changePct: -1.52, seed: 7,  trend: -0.30, news: 'Palantir slides on defense-budget resolution uncertainty despite AIP customer growth.' },
-  { sym: 'RGTI', price: 14.09,  changePct:  4.61, seed: 11, trend:  0.60, news: 'Rigetti demonstrates 99.5% 2-qubit gate fidelity on Ankaa-3; shares pop pre-market.' },
-]
-
-function buildStocks(offset = 0) {
-  return STOCK_DEFS.map(s => ({ ...s, spark: genSpark(s.seed + offset, s.trend) }))
-}
 
 function StocksPanel() {
   const { stocks, loading, error, refresh, refreshTime } = useStocks()
@@ -458,7 +437,7 @@ function StocksPanel() {
     <section className="panel panel-stocks">
       <div className="panel-head">
         <div>
-          <div className="panel-label">IV · Markets</div>
+          <div className="panel-label">Markets</div>
           <div className="panel-title">Watchlist</div>
         </div>
         <div className="panel-meta stocks-meta">
@@ -481,8 +460,15 @@ function StocksPanel() {
                 </div>
                 <div className="stock-price">${s.price.toFixed(2)}</div>
               </div>
-              <Sparkline data={s.spark} up={up} />
-              <div className="stock-news">{s.news}</div>
+              <div className="stock-headlines">
+                {s.headlines?.length ? s.headlines.map((h, i) => (
+                  <div
+                    key={i}
+                    className="stock-headline"
+                    onClick={() => h.url && window.open(h.url, '_blank')}
+                  >{h.title}</div>
+                )) : <div className="stock-headline stock-headline-empty">No recent news</div>}
+              </div>
             </div>
           )
         })}

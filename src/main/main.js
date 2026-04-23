@@ -62,26 +62,28 @@ ipcMain.handle('get-stock-quotes', async () => {
   const token = process.env.VITE_YAHOO_FINANCE_API_KEY
   if (!token) throw new Error('VITE_YAHOO_FINANCE_API_KEY not set in .env')
 
-  const to = Math.floor(Date.now() / 1000)
-  const from = to - 8 * 60 * 60
+  const toDate = new Date().toISOString().slice(0, 10)
+  const fromDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
 
   const results = await Promise.all(
     STOCK_SYMBOLS.map(async (sym) => {
-      const [quote, candle] = await Promise.all([
+      const [quote, newsItems] = await Promise.all([
         fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${token}`).then(r => r.json()),
-        fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=60&from=${from}&to=${to}&token=${token}`)
-          .then(r => r.json()).catch(() => null),
+        fetch(`https://finnhub.io/api/v1/company-news?symbol=${sym}&from=${fromDate}&to=${toDate}&token=${token}`)
+          .then(r => r.json()).catch(() => []),
       ])
 
       if (typeof quote.c !== 'number') throw new Error(`No quote for ${sym}`)
-      const spark = candle?.s === 'ok' ? candle.c.filter(v => v != null) : []
+
+      const headlines = Array.isArray(newsItems)
+        ? newsItems.slice(0, 4).map(n => ({ title: n.headline, url: n.url }))
+        : []
 
       return {
         sym,
         price: quote.c,
         changePct: quote.dp ?? 0,
-        spark,
-        news: STOCK_NEWS[sym] ?? '',
+        headlines,
       }
     })
   )
