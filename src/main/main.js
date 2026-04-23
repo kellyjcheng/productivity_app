@@ -9,6 +9,8 @@ const store = new Store({
   }
 })
 
+const STOCK_SYMBOLS = ['NDAQ', 'POWL', 'PLTR', 'RGTI', 'MU', 'CRWD', 'META', 'AMD']
+
 let win
 
 function createWindow() {
@@ -48,6 +50,43 @@ ipcMain.handle('get-todos', () => store.get('todos'))
 
 ipcMain.handle('save-todos', (_, todos) => {
   store.set('todos', todos)
+})
+
+ipcMain.handle('get-stock-quotes', async () => {
+  const symbols = STOCK_SYMBOLS.join(',')
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbols)}`
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0',
+      'Accept': 'application/json',
+    },
+  })
+
+  if (!res.ok) throw new Error(`Yahoo Finance ${res.status}`)
+
+  const data = await res.json()
+  const results = data?.quoteResponse?.result
+  if (!Array.isArray(results)) throw new Error('Invalid stock quote response')
+
+  const bySymbol = new Map(results.map((quote) => [quote.symbol, quote]))
+
+  return STOCK_SYMBOLS.map((symbol) => {
+    const quote = bySymbol.get(symbol)
+    if (!quote || typeof quote.regularMarketPrice !== 'number') {
+      throw new Error(`Missing quote for ${symbol}`)
+    }
+
+    const change = typeof quote.regularMarketChange === 'number' ? quote.regularMarketChange : 0
+    const changePct = typeof quote.regularMarketChangePercent === 'number' ? quote.regularMarketChangePercent : 0
+
+    return {
+      sym: symbol,
+      price: quote.regularMarketPrice,
+      change,
+      changePct,
+      news: `Day change ${change >= 0 ? '+' : '-'}$${Math.abs(change).toFixed(2)}`,
+    }
+  })
 })
 
 ipcMain.handle('toggle-startup', async (_, enable) => {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import wooperGif from './assets/wooper/wooper.gif'
 import { useWeather }           from './hooks/useWeather.js'
 import { useNews, CATEGORIES }  from './hooks/useNews.js'
+import { useStocks }            from './hooks/useStocks.js'
 import { useTodos }             from './hooks/useTodos.js'
 import './styles/globals.css'
 
@@ -68,27 +69,8 @@ function WeatherIcon({ code, ...props }) {
   return <IconCloud {...props} />
 }
 
-// ---------- SPARKLINE ----------
-function Sparkline({ data, up, color }) {
-  if (!data || data.length < 2) return null
-  const w = 100, h = 40, pad = 2
-  const min = Math.min(...data), max = Math.max(...data)
-  const range = max - min || 1
-  const pts = data.map((v, i) => {
-    const x = pad + (i / (data.length - 1)) * (w - pad * 2)
-    const y = pad + (1 - (v - min) / range) * (h - pad * 2)
-    return [x, y]
-  })
-  const d = 'M ' + pts.map(p => p.join(' ')).join(' L ')
-  const stroke = color || (up ? '#10b981' : '#ef4444')
-  const fill = up ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)'
-  const areaD = d + ` L ${pts[pts.length - 1][0]} ${h} L ${pts[0][0]} ${h} Z`
-  return (
-    <svg className="stock-spark" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-      <path d={areaD} fill={fill} />
-      <path d={d} fill="none" stroke={stroke} strokeWidth="1.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
+function Sparkline() {
+  return null
 }
 
 // ---------- WOOPER (title bar slide) ----------
@@ -115,13 +97,28 @@ function Wooper() {
 }
 
 // ---------- TITLE BAR ----------
+function getTimePhase() {
+  const h = new Date().getHours()
+  if (h >= 5  && h < 12) return { brief: 'Morning Brief',   greet: 'Good morning'   }
+  if (h >= 12 && h < 17) return { brief: 'Afternoon Brief', greet: 'Good afternoon' }
+  if (h >= 17 && h < 21) return { brief: 'Evening Brief',   greet: 'Good evening'   }
+  return                         { brief: 'Night Brief',     greet: 'Good night'     }
+}
+
 function TitleBar() {
   const now = new Date()
   const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   const [greetFlip, setGreetFlip] = useState(false)
+  const [phase, setPhase] = useState(getTimePhase)
 
   useEffect(() => {
     const id = setInterval(() => setGreetFlip(f => !f), 4200)
+    return () => clearInterval(id)
+  }, [])
+
+  // Re-evaluate time phase every minute so it updates without a restart
+  useEffect(() => {
+    const id = setInterval(() => setPhase(getTimePhase()), 60_000)
     return () => clearInterval(id)
   }, [])
 
@@ -130,8 +127,8 @@ function TitleBar() {
       <div className="titlebar-left">
         <div className="app-dot" />
         <div className="greet-wrap">
-          <span className={`greet ${!greetFlip ? 'show' : 'hide'}`}>Morning Brief</span>
-          <span className={`greet ${greetFlip ? 'show' : 'hide'}`}>Good morning</span>
+          <span className={`greet ${!greetFlip ? 'show' : 'hide'}`}>{phase.brief}</span>
+          <span className={`greet ${greetFlip ? 'show' : 'hide'}`}>{phase.greet}</span>
         </div>
         <div className="app-sub">— {dateStr}</div>
       </div>
@@ -427,14 +424,19 @@ function genSpark(seed, trend) {
   return arr
 }
 
-const STOCKS = [
-  { sym: 'NDAQ', price: 78.42,  changePct:  0.84, spark: genSpark(1,  0.15), news: 'Nasdaq beats Q1 estimates on record trading volume; exchange revenue up 9% YoY.' },
-  { sym: 'POWL', price: 241.18, changePct:  2.34, spark: genSpark(3,  0.45), news: 'Powell Industries wins $180M data-center switchgear contract; backlog hits all-time high.' },
-  { sym: 'PLTR', price: 32.77,  changePct: -1.52, spark: genSpark(7, -0.30), news: 'Palantir slides on defense-budget resolution uncertainty despite AIP customer growth.' },
-  { sym: 'RGTI', price: 14.09,  changePct:  4.61, spark: genSpark(11, 0.60), news: 'Rigetti demonstrates 99.5% 2-qubit gate fidelity on Ankaa-3; shares pop pre-market.' },
+const STOCK_DEFS = [
+  { sym: 'NDAQ', price: 78.42,  changePct:  0.84, seed: 1,  trend:  0.15, news: 'Nasdaq beats Q1 estimates on record trading volume; exchange revenue up 9% YoY.' },
+  { sym: 'POWL', price: 241.18, changePct:  2.34, seed: 3,  trend:  0.45, news: 'Powell Industries wins $180M data-center switchgear contract; backlog hits all-time high.' },
+  { sym: 'PLTR', price: 32.77,  changePct: -1.52, seed: 7,  trend: -0.30, news: 'Palantir slides on defense-budget resolution uncertainty despite AIP customer growth.' },
+  { sym: 'RGTI', price: 14.09,  changePct:  4.61, seed: 11, trend:  0.60, news: 'Rigetti demonstrates 99.5% 2-qubit gate fidelity on Ankaa-3; shares pop pre-market.' },
 ]
 
+function buildStocks(offset = 0) {
+  return STOCK_DEFS.map(s => ({ ...s, spark: genSpark(s.seed + offset, s.trend) }))
+}
+
 function StocksPanel() {
+  const { stocks, loading, error, refresh, refreshTime } = useStocks()
   return (
     <section className="panel panel-stocks">
       <div className="panel-head">
@@ -442,12 +444,13 @@ function StocksPanel() {
           <div className="panel-label">IV · Markets</div>
           <div className="panel-title">Watchlist</div>
         </div>
-        <div className="panel-meta">
-          Pre-market · {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+        <div className="panel-meta stocks-meta">
+          <span>Updated · {refreshTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+          <button className="stocks-refresh-btn" onClick={refresh} title="Refresh charts">↻</button>
         </div>
       </div>
       <div className="stocks-grid">
-        {STOCKS.map(s => {
+        {stocks.map(s => {
           const up = s.changePct >= 0
           return (
             <div className="stock-card" key={s.sym}>
