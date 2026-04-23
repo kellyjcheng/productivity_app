@@ -13,11 +13,11 @@ let win
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 420,
-    height: 720,
+    width: 1220,
+    height: 760,
     resizable: true,
-    minWidth: 360,
-    minHeight: 500,
+    minWidth: 900,
+    minHeight: 600,
     frame: false,
     alwaysOnTop: false,
     transparent: false,

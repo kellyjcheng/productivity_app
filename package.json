@@ -4,7 +4,7 @@
   "description": "A tiny always-available desktop dashboard with weather, todos, news, and a dancing Wooper.",
   "main": "dist-electron/main/main.js",
   "scripts": {
-    "dev": "electron-vite dev",
+    "dev": "node scripts/dev.js",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
     "dist": "electron-builder"
