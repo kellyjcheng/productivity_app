@@ -1,0 +1,6 @@
+npm run build 
+npm run dist
+
+git add src/ scripts/ package.json electron-builder.yml .env.example
+git commit -m "describe your changes"
+git push origin main
