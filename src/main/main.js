@@ -35,6 +35,9 @@ function createWindow() {
     }
   })
 
+  win.on('maximize',   () => win.webContents.send('window-maximized', true))
+  win.on('unmaximize', () => win.webContents.send('window-maximized', false))
+
   if (process.env['ELECTRON_RENDERER_URL']) {
     win.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -102,4 +105,10 @@ ipcMain.on('close-window', () => app.quit())
 
 ipcMain.on('minimize-window', () => {
   if (win) win.minimize()
+})
+
+ipcMain.on('maximize-window', () => {
+  if (!win) return
+  if (win.isMaximized()) win.restore()
+  else win.maximize()
 })

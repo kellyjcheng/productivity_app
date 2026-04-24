@@ -7,5 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleStartup: (enable) => ipcRenderer.invoke('toggle-startup', enable),
   getStartupEnabled: () => ipcRenderer.invoke('get-startup'),
   closeWindow: () => ipcRenderer.send('close-window'),
-  minimizeWindow: () => ipcRenderer.send('minimize-window')
+  minimizeWindow: () => ipcRenderer.send('minimize-window'),
+  maximizeWindow: () => ipcRenderer.send('maximize-window'),
+  onMaximized: (cb) => ipcRenderer.on('window-maximized', (_, val) => cb(val))
 })

@@ -467,6 +467,13 @@ html.theme-retro .temp-big { font-size: 64px; font-weight: 400; }
 
 html.theme-retro .weather-cond { font-size: 18px; }
 
+.weather-sun-times {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
 .weather-hi-lo {
   font-family: var(--font-mono);
   font-size: 11px;

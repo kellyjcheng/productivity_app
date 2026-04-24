@@ -22,6 +22,12 @@ const IconMax = (p) => (
     <rect x="4" y="4" width="8" height="8" rx="1" />
   </svg>
 )
+const IconRestore = (p) => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" {...p}>
+    <rect x="5" y="5" width="6" height="6" rx="1" />
+    <path d="M3 9V3h6v2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
 const IconCheck = (p) => (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <path d="M3 8.5l3.5 3.5L13 5" />
@@ -44,6 +50,17 @@ const IconSun = (p) => (
     <path d="M24 6v4M24 38v4M6 24h4M38 24h4M11 11l3 3M34 34l3 3M37 11l-3 3M14 34l-3 3" />
   </svg>
 )
+const IconMoon = (p) => (
+  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M30 10a16 16 0 1 0 8 28A20 20 0 0 1 30 10z" fill="currentColor" fillOpacity="0.15" />
+  </svg>
+)
+const IconMoonCloud = (p) => (
+  <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+    <path d="M22 6a12 12 0 1 0 6 22A15 15 0 0 1 22 6z" fill="currentColor" fillOpacity="0.15" />
+    <path d="M22 36h16a6 6 0 0 0 .5-11.9A9 9 0 0 0 23 27a5 5 0 0 0-1 9z" fill="currentColor" fillOpacity="0.12" />
+  </svg>
+)
 const IconPartly = (p) => (
   <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
     <circle cx="18" cy="18" r="6" fill="currentColor" fillOpacity="0.15" />
@@ -61,9 +78,11 @@ const IconSnow = (p) => (
 // OWM icon code → SVG component
 function WeatherIcon({ code, ...props }) {
   const prefix = (code || '01').substring(0, 2)
+  if (prefix === '00') return <IconMoon {...props} />
   if (prefix === '01') return <IconSun {...props} />
   if (prefix === '02' || prefix === '03') return <IconPartly {...props} />
   if (prefix === '04') return <IconCloud {...props} />
+  if (prefix === '06') return <IconMoonCloud {...props} />
   if (prefix === '09' || prefix === '10' || prefix === '11') return <IconCloudRain {...props} />
   if (prefix === '13') return <IconSnow {...props} />
   return <IconCloud {...props} />
@@ -127,16 +146,20 @@ function TitleBar() {
   const dateStr = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   const [greetFlip, setGreetFlip] = useState(false)
   const [phase, setPhase] = useState(getTimePhase)
+  const [maximized, setMaximized] = useState(false)
 
   useEffect(() => {
     const id = setInterval(() => setGreetFlip(f => !f), 4200)
     return () => clearInterval(id)
   }, [])
 
-  // Re-evaluate time phase every minute so it updates without a restart
   useEffect(() => {
     const id = setInterval(() => setPhase(getTimePhase()), 60_000)
     return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    window.electronAPI?.onMaximized?.(setMaximized)
   }, [])
 
   return (
@@ -158,8 +181,12 @@ function TitleBar() {
         >
           <IconMinus />
         </button>
-        <button className="tb-btn" aria-label="Maximize">
-          <IconMax />
+        <button
+          className="tb-btn"
+          aria-label={maximized ? 'Restore' : 'Maximize'}
+          onClick={() => window.electronAPI?.maximizeWindow()}
+        >
+          {maximized ? <IconRestore /> : <IconMax />}
         </button>
         <button
           className="tb-btn"
@@ -269,7 +296,7 @@ function NewsPanel() {
 
 // ---------- WEATHER PANEL ----------
 function WeatherPanel() {
-  const { current, hourly, cityName, loading, error } = useWeather()
+  const { current, hourly, cityName, sunrise, sunset, loading, error, refresh } = useWeather()
   const unitSymbol = import.meta.env.VITE_TEMP_UNIT === 'metric' ? '°C' : '°F'
 
   const fmtHour = (date) => {
@@ -283,8 +310,9 @@ function WeatherPanel() {
           <div className="panel-label">Weather</div>
           <div className="panel-title">{cityName || 'Loading…'}</div>
         </div>
-        <div className="panel-meta">
-          {current ? `${current.humidity}% humidity` : '—'}
+        <div className="panel-meta stocks-meta">
+          <span>{current ? `${current.humidity}% humidity` : '—'}</span>
+          <button className="stocks-refresh-btn" onClick={refresh} title="Refresh weather" disabled={loading}>↻</button>
         </div>
       </div>
 
@@ -314,6 +342,11 @@ function WeatherPanel() {
               <div className="weather-cond" style={{ textTransform: 'capitalize' }}>
                 {current.description}
               </div>
+              {(sunrise || sunset) && (
+                <div className="weather-sun-times">
+                  ↑ {sunrise} &nbsp;·&nbsp; ↓ {sunset}
+                </div>
+              )}
               <div className="weather-hi-lo">
                 H {current.tempMax}{unitSymbol} · L {current.tempMin}{unitSymbol} · Feels {current.feelsLike}{unitSymbol}
               </div>
